@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  edumind-api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8003:8000"
+    environment:
+      - APP_NAME=EduMind AI
+      - DEBUG=false
+      - LOG_LEVEL=INFO
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    volumes:
+      - ./backend:/app
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  edumind-redis:
+    image: redis:7-alpine
+    ports:
+      - "6381:6379"
+    volumes:
+      - edumind_redis_data:/data
+    restart: unless-stopped
+
+  edumind-postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=edumind
+      - POSTGRES_USER=edumind_user
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    ports:
+      - "5435:5432"
+    volumes:
+      - edumind_postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  edumind-mongodb:
+    image: mongo:6
+    ports:
+      - "27017:27017"
+    volumes:
+      - edumind_mongo_data:/data/db
+    restart: unless-stopped
+
+volumes:
+  edumind_redis_data:
+  edumind_postgres_data:
+  edumind_mongo_data:
